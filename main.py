@@ -1,6 +1,7 @@
 import urllib.request
 import json
 import time
+import generic_funcs
 
 with open("config.json") as config_file:
     settings = json.load(config_file)
