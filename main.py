@@ -1,13 +1,16 @@
 import urllib.request
 import json
 import time
-import generic_funcs
+import funcs
+
+API_URL = "https://slack.com/api/"
 
 with open("config.json") as config_file:
     settings = json.load(config_file)
     USERTOKENSTRING = settings["USERTOKENSTRING"]
     URLTOKENSTRING = settings["URLTOKENSTRING"]
     TEAMNAMESTRING = settings["TEAMNAMESTRING"]
+
 
 class User:
     def __init__(self, name, id):
@@ -22,12 +25,12 @@ def load_all_users():
     return all_users        
 
 def get_users():
-    with urllib.request.urlopen("https://slack.com/api/users.list?token={0}".format(USERTOKENSTRING)) as response:
+    with urllib.request.urlopen("{0}api/users.list?token={1}".format(API_URL, USERTOKENSTRING)) as response:
         return json.loads(response.read().decode("utf-8"))["members"]
 
 
 def get_channels():
-    with urllib.request.urlopen("https://slack.com/api/channels.list?token={0}".format(USERTOKENSTRING)) as response:
+    with urllib.request.urlopen("{0}channels.list?token={1}".format(API_URL, USERTOKENSTRING)) as response:
         return json.loads(response.read().decode("utf-8"))["channels"]
 
 def post_message(message):
@@ -36,13 +39,14 @@ def post_message(message):
         "channel": "",
         "text": ""
         }
-    with urllib.request.urlopen("https://slack.com/api/chat.postMessage?token={0}&channel=C06E3DG6S&text={1}&username=Boten%20Anna".format( \
-        USERTOKENSTRING, message)) as response:
+    with urllib.request.urlopen("{0}chat.postMessage?token={1}&channel=C06E3DG6S&text={2}&username=Boten%20Anna".format( \
+        API_URL, USERTOKENSTRING, message)) as response:
         return response.read().decode("utf-8")
 
-def get_latest_messages():
+def get_latest_messages(amount):
     #channel "test" id:C06E3DG6S
-    with urllib.request.urlopen("https://slack.com/api/channels.history?token={0}&channel=C06E3DG6S&count=1".format(USERTOKENSTRING)) as response:
+    with urllib.request.urlopen("{0}channels.history?token={1}&channel=C06E3DG6S&count=1".format( \
+        API_URL, USERTOKENSTRING)) as response:
         return json.loads(response.read().decode("utf-8"))["messages"]
 
 def start_listener(started):
@@ -68,8 +72,15 @@ def main():
         if started:
             ##Samla namn å ALLT annat
             ##started = False
-            pass
+            time.sleep(20)
+            participants = []
+            for message in latest_messages:
+                if message["text"] == "go":
+                    post_message(users[message["user"]].name + "%20registered")
+                    participants.append(users[message["user"]])
+            break
         time.sleep(2)
+        post_message("Ended")
     
 if __name__ == "__main__":
     main()
