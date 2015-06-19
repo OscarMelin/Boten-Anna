@@ -2,6 +2,7 @@ import urllib.request
 import json
 import time
 import funcs
+import random
 
 API_URL = "https://slack.com/api/"
 
@@ -25,7 +26,7 @@ def load_all_users():
     return all_users        
 
 def get_users():
-    with urllib.request.urlopen("{0}api/users.list?token={1}".format(API_URL, USERTOKENSTRING)) as response:
+    with urllib.request.urlopen("{0}users.list?token={1}".format(API_URL, USERTOKENSTRING)) as response:
         return json.loads(response.read().decode("utf-8"))["members"]
 
 
@@ -35,52 +36,65 @@ def get_channels():
 
 def post_message(message):
     #channel "test" id:C06E3DG6S
-    params = {
-        "channel": "",
-        "text": ""
-        }
     with urllib.request.urlopen("{0}chat.postMessage?token={1}&channel=C06E3DG6S&text={2}&username=Boten%20Anna".format( \
         API_URL, USERTOKENSTRING, message)) as response:
         return response.read().decode("utf-8")
 
 def get_latest_messages(amount):
     #channel "test" id:C06E3DG6S
-    with urllib.request.urlopen("{0}channels.history?token={1}&channel=C06E3DG6S&count=1".format( \
-        API_URL, USERTOKENSTRING)) as response:
+    with urllib.request.urlopen("{0}channels.history?token={1}&channel=C06E3DG6S&count={2}".format( \
+        API_URL, USERTOKENSTRING, str(amount))) as response:
         return json.loads(response.read().decode("utf-8"))["messages"]
 
-def start_listener(started):
-    
+def start_listener(started, users, latest_messages):
     if not started:
-        latest_messages = get_latest_messages()
-        users = load_all_users()
-
         for message in latest_messages:
             if message["text"] == "start":
                 post_message("Started%20by%20" + users[message["user"]].name)
-        return True
+                return True
     return False
 
 def main():
 
     started = False
+    ended = False
+    post_message("New%20session%20active.")
+    post_message("Type%20'start'%20to%20start.")
 
     while True:
-
-        started = start_listener(started)
+        
+        latest_messages = get_latest_messages(5)
+        users = load_all_users()
+        started = start_listener(started, users, latest_messages)
 
         if started:
-            ##Samla namn å ALLT annat
-            ##started = False
+            
+            post_message("Started.%20Type%20'register'%20to%20register")
             time.sleep(20)
             participants = []
-            for message in latest_messages:
-                if message["text"] == "go":
+            for message in get_latest_messages(10):                
+
+                if message["text"] == "register":
                     post_message(users[message["user"]].name + "%20registered")
                     participants.append(users[message["user"]])
+                    ended = True
+                elif message["text"] == "Started.%20Type%20'register'%20to%20register":
+                    break
+                    
+        if ended:
+            
+            post_message("Registered%20participants:")
+            participants = list(set(participants))
+            for user in participants:
+                post_message(user.name)
+                
+            post_message("Session%20ended")
             break
+        
+        else:        
+            continue          
         time.sleep(2)
-        post_message("Ended")
+        
     
 if __name__ == "__main__":
     main()
