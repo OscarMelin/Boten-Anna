@@ -14,7 +14,6 @@ def get_users():
     with urllib.request.urlopen("{0}users.list?token={1}".format(API_URL, USERTOKENSTRING)) as response:
         return json.loads(response.read().decode("utf-8"))["members"]
 
-
 def get_channels():
     with urllib.request.urlopen("{0}channels.list?token={1}".format(API_URL, USERTOKENSTRING)) as response:
         return json.loads(response.read().decode("utf-8"))["channels"]
